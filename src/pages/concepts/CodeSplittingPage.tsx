@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, ComponentType } from "react";
 import CodeExample from "../../components/CodeExample";
 import {
   Chart as ChartJS,
@@ -66,7 +66,7 @@ const SalesChart = () => {
 };
 
 // Lazy loaded version of the chart
-const LazySalesChart = lazy(() => {
+const LazySalesChart = lazy<ComponentType>(() => {
   console.log("🚀 Lazy Chart: Downloading chunk...");
 
   // In a real app, we would do:
@@ -261,7 +261,14 @@ function Dashboard() {
               </div>
             )}
 
-            {<SalesChart />}
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              onClick={() => setShowBadExample(true)}
+            >
+              Show Sales Report
+            </button>
+
+            {showBadExample && <SalesChart />}
           </div>
         </CodeExample>
 
