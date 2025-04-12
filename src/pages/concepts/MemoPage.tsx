@@ -22,6 +22,27 @@ const ExpensiveComponent = memo(({ value }: { value: number }) => {
   );
 });
 
+const BadExpensiveComponent = ({ value }: { value: number }) => {
+  console.log("Bad ExpensiveComponent renderizado");
+
+  // Simulamos un cálculo costoso
+  const calculateExpensiveValue = (num: number) => {
+    let result = 0;
+    for (let i = 0; i < 1000000; i++) {
+      result += num;
+    }
+    return result;
+  };
+
+  const expensiveValue = calculateExpensiveValue(value);
+
+  return (
+    <div className="p-4 bg-white rounded shadow">
+      <p>Valor calculado: {expensiveValue}</p>
+    </div>
+  );
+};
+
 const MemoPage = () => {
   const [count, setCount] = useState(0);
   const [unrelatedState, setUnrelatedState] = useState(0);
@@ -54,7 +75,7 @@ const MemoPage = () => {
 
         <div className="space-y-4">
           <ExpensiveComponent value={count} />
-
+          <BadExpensiveComponent value={count} />
           <div className="space-x-4">
             <button
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
