@@ -19,7 +19,7 @@ const DebouncePage = lazy(
 const ThrottlePage = lazy(
   () => import("./pages/concepts/debounce-throttle/throttle")
 );
-const ProfilingPage = lazy(() => import("./pages/concepts/ProfilingPage"));
+const ProfilingPage = lazy(() => import("./pages/concepts/profiling"));
 const VirtualizationConceptPage = lazy(
   () => import("./pages/concepts/virtualization")
 );
