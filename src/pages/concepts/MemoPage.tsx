@@ -1,6 +1,6 @@
 import { useState, memo } from "react";
 
-const TestComponent = ({ value }: { value: number }) => {
+const TestComponent = ({ value, label }: { value: number; label: string }) => {
   // Simulate an expensive calculation
   const calculateExpensiveValue = (num: number) => {
     let result = 0;
@@ -14,20 +14,22 @@ const TestComponent = ({ value }: { value: number }) => {
 
   return (
     <div className="p-4 bg-white rounded shadow" data-react-scan>
-      <p>Calculated value: {expensiveValue}</p>
+      <p>
+        {label}: {expensiveValue}
+      </p>
     </div>
   );
 };
 
 // Memoized child component
-const ExpensiveComponent = memo(({ value }: { value: number }) => {
+const MemoExpensiveComponent = memo(({ value }: { value: number }) => {
   console.log("Good ExpensiveComponent rendered");
-  return <TestComponent value={value} />;
+  return <TestComponent value={value} label="Good" />;
 });
 
-const BadExpensiveComponent = ({ value }: { value: number }) => {
+const WithoutMemoExpensiveComponent = ({ value }: { value: number }) => {
   console.warn("Bad ExpensiveComponent rendered");
-  return <TestComponent value={value} />;
+  return <TestComponent value={value} label="Bad" />;
 };
 
 const MemoPage = () => {
@@ -59,10 +61,10 @@ const MemoPage = () => {
 
         <div className="space-y-4">
           <div data-react-scan-label="Memoized Component">
-            <ExpensiveComponent value={count} />
+            <MemoExpensiveComponent value={count} />
           </div>
           <div data-react-scan-label="Non-memoized Component">
-            <BadExpensiveComponent value={count} />
+            <WithoutMemoExpensiveComponent value={count} />
           </div>
           <div className="space-x-4">
             <button
