@@ -40,7 +40,7 @@ const VirtualizationConceptPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link
-          to="/concepts/virtualization/bad-example"
+          to="/virtualization/bad-example"
           className="block p-6 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
         >
           <h3 className="text-xl font-semibold mb-2">❌ Bad Example</h3>
@@ -51,7 +51,7 @@ const VirtualizationConceptPage = () => {
         </Link>
 
         <Link
-          to="/concepts/virtualization/good-example"
+          to="/virtualization/good-example"
           className="block p-6 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
         >
           <h3 className="text-xl font-semibold mb-2">✅ Good Example</h3>

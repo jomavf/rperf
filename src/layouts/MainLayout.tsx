@@ -45,7 +45,7 @@ const MainLayout = () => {
             </li>
             <li>
               <Link
-                to="/virtual-lists"
+                to="/virtualization"
                 className="text-blue-600 hover:text-blue-800"
               >
                 Virtual Lists

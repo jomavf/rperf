@@ -10,11 +10,14 @@ const CodeSplittingPage = lazy(
   () => import("./pages/concepts/CodeSplittingPage")
 );
 const LazyLoadingPage = lazy(() => import("./pages/concepts/LazyLoadingPage"));
-const VirtualListsPage = lazy(
-  () => import("./pages/concepts/VirtualListsPage")
-);
 const DebounceThrottlePage = lazy(
-  () => import("./pages/concepts/DebounceThrottlePage")
+  () => import("./pages/concepts/debounce-throttle")
+);
+const DebouncePage = lazy(
+  () => import("./pages/concepts/debounce-throttle/debounce")
+);
+const ThrottlePage = lazy(
+  () => import("./pages/concepts/debounce-throttle/throttle")
 );
 const ProfilingPage = lazy(() => import("./pages/concepts/ProfilingPage"));
 const VirtualizationConceptPage = lazy(
@@ -45,29 +48,22 @@ function App() {
           <Route path="usecallback" element={<UseCallbackPage />} />
           <Route path="code-splitting" element={<CodeSplittingPage />} />
           <Route path="lazy-loading" element={<LazyLoadingPage />} />
-          <Route path="virtual-lists" element={<VirtualListsPage />} />
-          <Route
-            path="virtual-lists/bad-example"
-            element={<VirtualListsPage />}
-          />
-          <Route
-            path="virtual-lists/good-example"
-            element={<VirtualListsPage />}
-          />
           <Route path="debounce-throttle" element={<DebounceThrottlePage />} />
           <Route path="profiling" element={<ProfilingPage />} />
           <Route
-            path="concepts/virtualization"
+            path="virtualization"
             element={<VirtualizationConceptPage />}
           />
           <Route
-            path="concepts/virtualization/bad-example"
+            path="virtualization/bad-example"
             element={<BadExamplePage />}
           />
           <Route
-            path="concepts/virtualization/good-example"
+            path="virtualization/good-example"
             element={<GoodExamplePage />}
           />
+          <Route path="debounce-throttle/debounce" element={<DebouncePage />} />
+          <Route path="debounce-throttle/throttle" element={<ThrottlePage />} />
         </Route>
       </Routes>
     </Suspense>
