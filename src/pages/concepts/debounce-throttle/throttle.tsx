@@ -1,30 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import CodeExample from "../../../components/CodeExample";
 import throttle from "lodash/throttle";
-
-// Simulated API call to fetch more products
-const fetchMoreProducts = async (page: number) => {
-  console.log(`📦 API Call: Fetching page ${page}`);
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  return Array.from({ length: 10 }, (_, i) => ({
-    id: page * 10 + i,
-    title: `Product ${page * 10 + i + 1}`,
-    price: Math.round(Math.random() * 100 + 10),
-    description: `This is a sample product description for item ${
-      page * 10 + i + 1
-    }. It might be longer or shorter depending on the product.`,
-    image: `https://picsum.photos/seed/${page * 10 + i}/200/200`,
-  }));
-};
-
-// Simulated heavy calculation to demonstrate performance impact
-const performHeavyCalculation = () => {
-  let result = 0;
-  for (let i = 0; i < 10000; i++) {
-    result += Math.sin(i) * Math.cos(i);
-  }
-  return result;
-};
 
 interface Particle {
   x: number;
@@ -230,21 +206,23 @@ const GoodParticleExample = () => {
   }, [particles]);
 
   // Good Example: Throttle updates to 60fps (approximately every 16ms)
-  const throttledMouseMove = useCallback(
-    throttle((x: number, y: number) => {
-      // Add new particles
-      const newParticles = Array.from({ length: PARTICLE_COUNT }, () =>
-        createParticle(x, y)
-      );
+  const updateParticlesPosition = useCallback((x: number, y: number) => {
+    // Add new particles
+    const newParticles = Array.from({ length: PARTICLE_COUNT }, () =>
+      createParticle(x, y)
+    );
 
-      // Update existing particles
-      setParticles((prev) => {
-        const updated = updateParticles([...prev, ...newParticles], x, y);
-        setUpdates((u) => u + 1);
-        return updated;
-      });
-    }, 16),
-    []
+    // Update existing particles
+    setParticles((prev) => {
+      const updated = updateParticles([...prev, ...newParticles], x, y);
+      setUpdates((u) => u + 1);
+      return updated;
+    });
+  }, []);
+
+  const throttledMouseMove = useMemo(
+    () => throttle(updateParticlesPosition, 16),
+    [updateParticlesPosition]
   );
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {

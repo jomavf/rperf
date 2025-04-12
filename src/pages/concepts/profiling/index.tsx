@@ -1,23 +1,6 @@
-import { useState, useCallback, useEffect, useRef, Profiler } from "react";
+import { useState, useCallback, useRef, Profiler, useMemo } from "react";
 import CodeExample from "../../../components/CodeExample";
 import throttle from "lodash/throttle";
-
-interface ProfileData {
-  x: number;
-  y: number;
-  timestamp: number;
-  eventType: string;
-  elementInfo: string;
-}
-
-interface VisualizationPoint {
-  x: number;
-  y: number;
-  size: number;
-  color: string;
-  opacity: number;
-  label: string;
-}
 
 interface RenderMetrics {
   id: string;
@@ -29,26 +12,6 @@ interface RenderMetrics {
   timestamp: number;
 }
 
-const COLORS = {
-  click: "#FF6B6B",
-  mousemove: "#4ECDC4",
-  scroll: "#45B7D1",
-  keypress: "#96CEB4",
-};
-
-const MAX_POINTS = 100;
-const POINT_LIFE = 200;
-
-const createVisualizationPoint = (data: ProfileData): VisualizationPoint => ({
-  x: data.x,
-  y: data.y,
-  size: data.eventType === "click" ? 12 : 8,
-  color: COLORS[data.eventType as keyof typeof COLORS] || "#FFEEAD",
-  opacity: 1,
-  label: `${data.eventType} - ${data.elementInfo}`,
-});
-
-// Component that simulates a heavy load
 const HeavyComponent = ({ index }: { index: number }) => {
   // Simulate heavy work during render
   const result = Array.from({ length: 10000 }, (_, i) => i * index).reduce(
@@ -60,245 +23,6 @@ const HeavyComponent = ({ index }: { index: number }) => {
     <div className="p-4 bg-white rounded shadow-sm">
       <h3 className="font-semibold">Component {index}</h3>
       <p className="text-sm text-gray-600">Result: {result.toFixed(2)}</p>
-    </div>
-  );
-};
-
-const BadProfilingExample = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [points, setPoints] = useState<VisualizationPoint[]>([]);
-  const [events, setEvents] = useState(0);
-  const [fps, setFps] = useState(0);
-  const lastTimeRef = useRef(Date.now());
-  const frameCountRef = useRef(0);
-
-  // Update FPS counter every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const delta = now - lastTimeRef.current;
-      setFps(Math.round((frameCountRef.current * 1000) / delta));
-      frameCountRef.current = 0;
-      lastTimeRef.current = now;
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Animation loop
-  useEffect(() => {
-    let animationFrame: number;
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-
-    const animate = () => {
-      if (!canvas || !ctx) return;
-
-      // Clear canvas with slight trail effect
-      ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Update and draw points
-      setPoints((prevPoints) =>
-        prevPoints
-          .map((point) => ({
-            ...point,
-            opacity: point.opacity - 0.01,
-          }))
-          .filter((point) => point.opacity > 0)
-      );
-
-      // Draw points
-      points.forEach((point) => {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, point.size, 0, Math.PI * 2);
-        ctx.fillStyle = point.color;
-        ctx.globalAlpha = point.opacity;
-        ctx.fill();
-
-        // Draw label
-        ctx.font = "10px Arial";
-        ctx.fillStyle = "#fff";
-        ctx.fillText(point.label, point.x + point.size + 5, point.y);
-        ctx.globalAlpha = 1;
-      });
-
-      frameCountRef.current++;
-      animationFrame = requestAnimationFrame(animate);
-    };
-
-    animate();
-    return () => cancelAnimationFrame(animationFrame);
-  }, [points]);
-
-  // Bad Example: Profile every single event
-  const handleEvent = (e: React.MouseEvent | React.KeyboardEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = "clientX" in e ? e.clientX - rect.left : rect.width / 2;
-    const y = "clientY" in e ? e.clientY - rect.top : rect.height / 2;
-
-    // Collect profile data
-    const profileData: ProfileData = {
-      x,
-      y,
-      timestamp: Date.now(),
-      eventType: e.type,
-      elementInfo: (e.target as HTMLElement).tagName.toLowerCase(),
-    };
-
-    // Simulate heavy profiling work
-    Array.from({ length: 1000 }).forEach(() => {
-      JSON.parse(JSON.stringify(profileData));
-    });
-
-    // Create visualization point
-    const newPoint = createVisualizationPoint(profileData);
-
-    setPoints((prev) => [...prev.slice(-MAX_POINTS), newPoint]);
-    setEvents((e) => e + 1);
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between text-sm text-gray-500 mb-2">
-        <div>Processed Events: {events}</div>
-        <div>FPS: {fps}</div>
-      </div>
-      <canvas
-        ref={canvasRef}
-        width={600}
-        height={400}
-        onClick={handleEvent}
-        onMouseMove={handleEvent}
-        onKeyPress={handleEvent}
-        tabIndex={0}
-        className="border border-gray-200 rounded bg-gray-900 focus:outline-none"
-      />
-    </div>
-  );
-};
-
-const GoodProfilingExample = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [points, setPoints] = useState<VisualizationPoint[]>([]);
-  const [events, setEvents] = useState(0);
-  const [fps, setFps] = useState(0);
-  const lastTimeRef = useRef(Date.now());
-  const frameCountRef = useRef(0);
-
-  // Update FPS counter every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const delta = now - lastTimeRef.current;
-      setFps(Math.round((frameCountRef.current * 1000) / delta));
-      frameCountRef.current = 0;
-      lastTimeRef.current = now;
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Animation loop
-  useEffect(() => {
-    let animationFrame: number;
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-
-    const animate = () => {
-      if (!canvas || !ctx) return;
-
-      // Clear canvas with slight trail effect
-      ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Update and draw points
-      setPoints((prevPoints) =>
-        prevPoints
-          .map((point) => ({
-            ...point,
-            opacity: point.opacity - 0.01,
-          }))
-          .filter((point) => point.opacity > 0)
-      );
-
-      // Draw points
-      points.forEach((point) => {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, point.size, 0, Math.PI * 2);
-        ctx.fillStyle = point.color;
-        ctx.globalAlpha = point.opacity;
-        ctx.fill();
-
-        // Draw label
-        ctx.font = "10px Arial";
-        ctx.fillStyle = "#fff";
-        ctx.fillText(point.label, point.x + point.size + 5, point.y);
-        ctx.globalAlpha = 1;
-      });
-
-      frameCountRef.current++;
-      animationFrame = requestAnimationFrame(animate);
-    };
-
-    animate();
-    return () => cancelAnimationFrame(animationFrame);
-  }, [points]);
-
-  // Good Example: Throttle event profiling
-  const throttledProfile = useCallback(
-    throttle((e: React.MouseEvent | React.KeyboardEvent) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const x = "clientX" in e ? e.clientX - rect.left : rect.width / 2;
-      const y = "clientY" in e ? e.clientY - rect.top : rect.height / 2;
-
-      // Collect profile data
-      const profileData: ProfileData = {
-        x,
-        y,
-        timestamp: Date.now(),
-        eventType: e.type,
-        elementInfo: (e.target as HTMLElement).tagName.toLowerCase(),
-      };
-
-      // Simulate heavy profiling work
-      Array.from({ length: 1000 }).forEach(() => {
-        JSON.parse(JSON.stringify(profileData));
-      });
-
-      // Create visualization point
-      const newPoint = createVisualizationPoint(profileData);
-
-      setPoints((prev) => [...prev.slice(-MAX_POINTS), newPoint]);
-      setEvents((e) => e + 1);
-    }, 100), // Throttle to 10 profiles per second
-    []
-  );
-
-  const handleEvent = (e: React.MouseEvent | React.KeyboardEvent) => {
-    throttledProfile(e);
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between text-sm text-gray-500 mb-2">
-        <div>Processed Events: {events}</div>
-        <div>FPS: {fps}</div>
-      </div>
-      <canvas
-        ref={canvasRef}
-        width={600}
-        height={400}
-        onClick={handleEvent}
-        onMouseMove={handleEvent}
-        onKeyPress={handleEvent}
-        tabIndex={0}
-        className="border border-gray-200 rounded bg-gray-900 focus:outline-none"
-      />
     </div>
   );
 };
@@ -406,14 +130,16 @@ const GoodProfilerExample = () => {
   const rendersRef = useRef(0);
   const totalTimeRef = useRef(0);
 
-  // Ejemplo Bueno: Throttle las actualizaciones de métricas
-  const throttledUpdateMetrics = useCallback(
-    throttle(() => {
-      setMetrics(metricsRef.current.slice(-50));
-      setTotalRenders(rendersRef.current);
-      setAvgRenderTime(totalTimeRef.current / rendersRef.current);
-    }, 1000), // Actualizar máximo una vez por segundo
-    []
+  // Good Example: Throttle updates
+  const updateMetrics = useCallback(() => {
+    setMetrics(metricsRef.current.slice(-50));
+    setTotalRenders(rendersRef.current);
+    setAvgRenderTime(totalTimeRef.current / rendersRef.current);
+  }, []);
+
+  const throttledUpdateMetrics = useMemo(
+    () => throttle(updateMetrics, 1000),
+    [updateMetrics]
   );
 
   const handleRender = (
