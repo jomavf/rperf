@@ -1,10 +1,7 @@
-const VirtualListsPage = () => {
-  return (
-    <div>
-      <h1>Virtual Lists</h1>
-      <p>Coming soon...</p>
-    </div>
-  );
+import VirtualizationConceptPage from "./virtualization";
+
+const VirtualizedListPage = () => {
+  return <VirtualizationConceptPage />;
 };
 
-export default VirtualListsPage;
+export default VirtualizedListPage;

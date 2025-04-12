@@ -17,6 +17,15 @@ const DebounceThrottlePage = lazy(
   () => import("./pages/concepts/DebounceThrottlePage")
 );
 const ProfilingPage = lazy(() => import("./pages/concepts/ProfilingPage"));
+const VirtualizationConceptPage = lazy(
+  () => import("./pages/concepts/virtualization")
+);
+const BadExamplePage = lazy(
+  () => import("./pages/concepts/virtualization/bad-example")
+);
+const GoodExamplePage = lazy(
+  () => import("./pages/concepts/virtualization/good-example")
+);
 
 function App() {
   return (
@@ -37,8 +46,28 @@ function App() {
           <Route path="code-splitting" element={<CodeSplittingPage />} />
           <Route path="lazy-loading" element={<LazyLoadingPage />} />
           <Route path="virtual-lists" element={<VirtualListsPage />} />
+          <Route
+            path="virtual-lists/bad-example"
+            element={<VirtualListsPage />}
+          />
+          <Route
+            path="virtual-lists/good-example"
+            element={<VirtualListsPage />}
+          />
           <Route path="debounce-throttle" element={<DebounceThrottlePage />} />
           <Route path="profiling" element={<ProfilingPage />} />
+          <Route
+            path="concepts/virtualization"
+            element={<VirtualizationConceptPage />}
+          />
+          <Route
+            path="concepts/virtualization/bad-example"
+            element={<BadExamplePage />}
+          />
+          <Route
+            path="concepts/virtualization/good-example"
+            element={<GoodExamplePage />}
+          />
         </Route>
       </Routes>
     </Suspense>
