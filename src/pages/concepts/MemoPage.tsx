@@ -1,4 +1,4 @@
-import { useState, memo, useEffect } from "react";
+import { useState, memo } from "react";
 
 const TestComponent = ({ value }: { value: number }) => {
   // Simulate an expensive calculation
@@ -33,18 +33,6 @@ const BadExpensiveComponent = ({ value }: { value: number }) => {
 const MemoPage = () => {
   const [count, setCount] = useState(0);
   const [unrelatedState, setUnrelatedState] = useState(0);
-
-  // Add React Scan script
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://react-scan.com/script.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
 
   return (
     <div className="space-y-6">
