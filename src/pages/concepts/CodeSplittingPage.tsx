@@ -1,102 +1,101 @@
-import { useState, lazy, Suspense, useEffect } from "react";
+import { useState, lazy, Suspense } from "react";
 import CodeExample from "../../components/CodeExample";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  ChartData,
+  ChartOptions,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
 
-// Simulate immediate loading of heavy dependencies
-console.log(
-  "📦 Without code splitting: Loading all editor dependencies immediately (2MB+)"
+// Register Chart.js components immediately - this is what makes the initial bundle heavy
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
 );
-console.log("⚙️ CKEditor core loaded");
-console.log("⚙️ CKEditor plugins loaded");
-console.log("⚙️ CKEditor UI components loaded");
 
-// Simulating a heavy third-party rich text editor component
-const RichTextEditor = () => {
-  useEffect(() => {
-    console.log("📝 Regular editor mounted and ready");
-  }, []);
+// Helper to generate random data
+const generateData = (): ChartData<"line"> => {
+  return {
+    labels: ["January", "February", "March", "April", "May", "June"],
+    datasets: [
+      {
+        label: "Sales 2023",
+        data: Array.from({ length: 6 }, () => Math.floor(Math.random() * 1000)),
+        borderColor: "rgb(75, 192, 192)",
+        tension: 0.1,
+        fill: true,
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+      },
+    ],
+  };
+};
+
+const chartOptions: ChartOptions<"line"> = {
+  responsive: true,
+  plugins: {
+    title: {
+      display: true,
+      text: "Monthly Sales Report",
+    },
+  },
+};
+
+// Regular Chart Component - Everything loaded upfront
+const SalesChart = () => {
+  console.log("📊 Regular Chart component rendered");
 
   return (
-    <div className="border rounded-lg p-4">
-      <div className="flex items-center gap-2 border-b pb-2 mb-2">
-        <button className="p-1 hover:bg-gray-100 rounded">
-          <strong>B</strong>
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded">
-          <em>I</em>
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded">
-          <u>U</u>
-        </button>
-        <div className="w-px h-4 bg-gray-300 mx-1" />
-        <button className="p-1 hover:bg-gray-100 rounded">
-          <span role="img" aria-label="image">
-            🖼️
-          </span>
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded">
-          <span role="img" aria-label="link">
-            🔗
-          </span>
-        </button>
-      </div>
-      <div className="min-h-[100px] p-2 bg-gray-50 rounded" contentEditable>
-        Start typing here...
-      </div>
+    <div className="p-4 bg-white rounded-lg shadow-sm">
+      <Line data={generateData()} options={chartOptions} />
     </div>
   );
 };
 
-// Lazy loaded version of the rich text editor
-const LazyRichTextEditor = lazy(() => {
-  console.log("🚀 With code splitting: Downloading editor chunk on demand...");
-  return new Promise((resolve) => {
-    // Simulate network loading of a separate chunk
-    setTimeout(() => {
-      console.log("📥 Editor chunk downloaded (50KB)");
-      console.log("📦 Loading editor dependencies...");
+// Lazy loaded version of the chart
+const LazySalesChart = lazy(() => {
+  console.log("🚀 Lazy Chart: Downloading chunk...");
 
-      // Simulate loading dependencies after chunk is downloaded
+  // In a real app, we would do:
+  // return import('./SalesChart')
+
+  // For demo purposes, we're simulating the async import
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("📥 Chart.js core downloaded (180KB)");
+      console.log("📥 react-chartjs-2 downloaded (40KB)");
+
       setTimeout(() => {
-        console.log("⚙️ CKEditor core loaded");
-        console.log("⚙️ CKEditor plugins loaded");
-        console.log("⚙️ CKEditor UI components loaded");
+        console.log("📦 Loading additional plugins...");
+        console.log("📥 CategoryScale plugin loaded (120KB)");
+        console.log("📥 LinearScale plugin loaded (80KB)");
+        console.log("📥 PointElement plugin loaded (90KB)");
+        console.log("📥 LineElement plugin loaded (110KB)");
+        console.log("📥 Title plugin loaded (50KB)");
+        console.log("📥 Tooltip plugin loaded (150KB)");
+        console.log("📥 Legend plugin loaded (140KB)");
+        console.log("📥 Filler plugin loaded (70KB)");
 
         resolve({
-          default: function LazyEditor() {
-            useEffect(() => {
-              console.log("📝 Lazy editor mounted and ready");
-            }, []);
+          default: function LazyChart() {
+            console.log("📊 Lazy Chart component rendered");
 
             return (
-              <div className="border rounded-lg p-4">
-                <div className="flex items-center gap-2 border-b pb-2 mb-2">
-                  <button className="p-1 hover:bg-gray-100 rounded">
-                    <strong>B</strong>
-                  </button>
-                  <button className="p-1 hover:bg-gray-100 rounded">
-                    <em>I</em>
-                  </button>
-                  <button className="p-1 hover:bg-gray-100 rounded">
-                    <u>U</u>
-                  </button>
-                  <div className="w-px h-4 bg-gray-300 mx-1" />
-                  <button className="p-1 hover:bg-gray-100 rounded">
-                    <span role="img" aria-label="image">
-                      🖼️
-                    </span>
-                  </button>
-                  <button className="p-1 hover:bg-gray-100 rounded">
-                    <span role="img" aria-label="link">
-                      🔗
-                    </span>
-                  </button>
-                </div>
-                <div
-                  className="min-h-[100px] p-2 bg-gray-50 rounded"
-                  contentEditable
-                >
-                  Start typing here...
-                </div>
+              <div className="p-4 bg-white rounded-lg shadow-sm">
+                <Line data={generateData()} options={chartOptions} />
               </div>
             );
           },
@@ -111,21 +110,21 @@ const CodeSplittingPage = () => {
   const [showBadExample, setShowBadExample] = useState(false);
 
   const goodExample = `
-// Good Example: Using lazy loading for the rich text editor
-const RichTextEditor = lazy(() => import('./RichTextEditor'));
+// Good Example: Lazy loading Chart.js
+const SalesChart = lazy(() => import('./SalesChart'));
 
-function BlogEditor() {
-  const [showEditor, setShowEditor] = useState(false);
+function Dashboard() {
+  const [showChart, setShowChart] = useState(false);
 
   return (
     <div>
-      <button onClick={() => setShowEditor(true)}>
-        Start Writing
+      <button onClick={() => setShowChart(true)}>
+        Show Sales Report
       </button>
 
-      {showEditor && (
-        <Suspense fallback={<div>Loading editor...</div>}>
-          <RichTextEditor />
+      {showChart && (
+        <Suspense fallback={<div>Loading chart...</div>}>
+          <SalesChart />
         </Suspense>
       )}
     </div>
@@ -133,22 +132,40 @@ function BlogEditor() {
 }`;
 
   const badExample = `
-// Bad Example: Importing the rich text editor immediately
-import RichTextEditor from './RichTextEditor';
-import '@ckeditor/ckeditor5-build-classic'; // 2MB+
-import '@ckeditor/ckeditor5-plugins/*';     // More MBs
-import '@ckeditor/ckeditor5-theme';         // More KBs
+// Bad Example: Loading Chart.js immediately
+import { Chart as ChartJS } from 'chart.js';
+import {
+  CategoryScale,    // 120KB
+  LinearScale,      // 80KB
+  PointElement,     // 90KB
+  LineElement,      // 110KB
+  Title,            // 50KB
+  Tooltip,          // 150KB
+  Legend,           // 140KB
+  Filler            // 70KB
+} from 'chart.js';  // Total: ~810KB minified
 
-function BlogEditor() {
-  const [showEditor, setShowEditor] = useState(false);
+// Register everything upfront
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
+function Dashboard() {
+  const [showChart, setShowChart] = useState(false);
   return (
     <div>
-      <button onClick={() => setShowEditor(true)}>
-        Start Writing
+      <button onClick={() => setShowChart(true)}>
+        Show Sales Report
       </button>
 
-      {showEditor && <RichTextEditor />}
+      {showChart && <SalesChart />}
     </div>
   );
 }`;
@@ -159,19 +176,15 @@ function BlogEditor() {
         <h2 className="text-2xl font-bold">What is it?</h2>
         <p>
           Code splitting is a technique that allows you to split your
-          application's code into smaller chunks and load them on demand, rather
-          than loading everything upfront. This is especially useful for large
-          features like rich text editors, complex forms, or data visualization
-          tools that might not be needed immediately.
+          application's code into smaller chunks and load them on demand. In
+          this example, we're using Chart.js (810KB+) to demonstrate how code
+          splitting can significantly reduce the initial bundle size.
         </p>
 
         <h2 className="text-2xl font-bold">When to use it?</h2>
         <ul className="list-disc list-inside">
-          <li>
-            For features with heavy dependencies (rich text editors, charts,
-            etc.)
-          </li>
-          <li>For routes in your application</li>
+          <li>For heavy data visualization libraries (Chart.js, D3.js)</li>
+          <li>For complex UI components (rich text editors, date pickers)</li>
           <li>For features behind authentication</li>
           <li>For modal windows and dialogs</li>
           <li>For below-the-fold content</li>
@@ -198,18 +211,14 @@ function BlogEditor() {
       <div className="space-y-4">
         <CodeExample
           title="✅ Good Example"
-          description="Loading the rich text editor and its dependencies (2MB+) only when needed"
+          description="Loading Chart.js (810KB+) only when the chart is needed"
           code={goodExample}
         >
-          <div
-            data-react-scan-label="Lazy Loading Example"
-            className="space-y-4"
-          >
+          <div className="space-y-4">
             {!showGoodExample && (
               <div className="p-4 bg-green-50 rounded">
                 <p className="text-sm text-green-700">
-                  👆 Initial page load is fast because the editor code isn't
-                  loaded yet
+                  👆 Initial page load is fast because Chart.js isn't loaded yet
                 </p>
               </div>
             )}
@@ -218,20 +227,20 @@ function BlogEditor() {
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={() => setShowGoodExample(true)}
             >
-              Start Writing
+              Show Sales Report
             </button>
 
             {showGoodExample && (
               <Suspense
                 fallback={
                   <div className="p-4 bg-gray-100 rounded animate-pulse">
-                    <p className="text-sm text-gray-600">
-                      Loading rich text editor...
-                    </p>
+                    <div className="h-[300px] flex items-center justify-center">
+                      <p className="text-gray-600">Loading chart library...</p>
+                    </div>
                   </div>
                 }
               >
-                <LazyRichTextEditor />
+                <LazySalesChart />
               </Suspense>
             )}
           </div>
@@ -239,18 +248,15 @@ function BlogEditor() {
 
         <CodeExample
           title="❌ Bad Example"
-          description="Loading heavy editor dependencies (2MB+) immediately on page load"
+          description="Loading Chart.js (810KB+) immediately on page load"
           code={badExample}
         >
-          <div
-            data-react-scan-label="Eager Loading Example"
-            className="space-y-4"
-          >
+          <div className="space-y-4">
             {!showBadExample && (
               <div className="p-4 bg-red-50 rounded">
                 <p className="text-sm text-red-700">
-                  ⚠️ Page load is slower because editor code is included in the
-                  main bundle
+                  ⚠️ Page load is slower because Chart.js (810KB+) is included
+                  in the main bundle
                 </p>
               </div>
             )}
@@ -259,19 +265,18 @@ function BlogEditor() {
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={() => setShowBadExample(true)}
             >
-              Start Writing
+              Show Sales Report
             </button>
 
-            {showBadExample && <RichTextEditor />}
+            {showBadExample && <SalesChart />}
           </div>
         </CodeExample>
 
         <div className="bg-yellow-100 p-4 rounded">
           <p className="text-sm">
-            👉 Open the console to see the loading sequence. Notice how the
-            "Good" example only loads the editor code when you click the button,
-            while the "Bad" example loads everything upfront, making the initial
-            page load slower.
+            👉 Open the Network tab in DevTools to see the difference in initial
+            bundle size. The "Bad" example includes Chart.js (810KB+) in the
+            main bundle, while the "Good" example downloads it only when needed.
           </p>
         </div>
       </div>
