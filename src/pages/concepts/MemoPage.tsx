@@ -1,9 +1,6 @@
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 
-// Memoized child component
-const ExpensiveComponent = memo(({ value }: { value: number }) => {
-  console.log("ExpensiveComponent rendered");
-
+const TestComponent = ({ value }: { value: number }) => {
   // Simulate an expensive calculation
   const calculateExpensiveValue = (num: number) => {
     let result = 0;
@@ -16,36 +13,38 @@ const ExpensiveComponent = memo(({ value }: { value: number }) => {
   const expensiveValue = calculateExpensiveValue(value);
 
   return (
-    <div className="p-4 bg-white rounded shadow">
-      <p>Calculated value: {expensiveValue}</p>
-    </div>
-  );
-});
-
-const BadExpensiveComponent = ({ value }: { value: number }) => {
-  console.log("Bad ExpensiveComponent rendered");
-
-  // Simulate an expensive calculation
-  const calculateExpensiveValue = (num: number) => {
-    let result = 0;
-    for (let i = 0; i < 1000000; i++) {
-      result += num;
-    }
-    return result;
-  };
-
-  const expensiveValue = calculateExpensiveValue(value);
-
-  return (
-    <div className="p-4 bg-white rounded shadow">
+    <div className="p-4 bg-white rounded shadow" data-react-scan>
       <p>Calculated value: {expensiveValue}</p>
     </div>
   );
 };
 
+// Memoized child component
+const ExpensiveComponent = memo(({ value }: { value: number }) => {
+  console.log("Good ExpensiveComponent rendered");
+  return <TestComponent value={value} />;
+});
+
+const BadExpensiveComponent = ({ value }: { value: number }) => {
+  console.warn("Bad ExpensiveComponent rendered");
+  return <TestComponent value={value} />;
+};
+
 const MemoPage = () => {
   const [count, setCount] = useState(0);
   const [unrelatedState, setUnrelatedState] = useState(0);
+
+  // Add React Scan script
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://react-scan.com/script.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -71,8 +70,12 @@ const MemoPage = () => {
         <h3 className="text-lg font-semibold mb-4">Practical Example</h3>
 
         <div className="space-y-4">
-          <ExpensiveComponent value={count} />
-          <BadExpensiveComponent value={count} />
+          <div data-react-scan-label="Memoized Component">
+            <ExpensiveComponent value={count} />
+          </div>
+          <div data-react-scan-label="Non-memoized Component">
+            <BadExpensiveComponent value={count} />
+          </div>
           <div className="space-x-4">
             <button
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -91,9 +94,10 @@ const MemoPage = () => {
 
           <div className="bg-yellow-100 p-4 rounded">
             <p className="text-sm">
-              👉 Watch the browser console. The ExpensiveComponent only
-              re-renders when you change the counter, not when you update the
-              unrelated state.
+              👉 React Scan will highlight components when they re-render.
+              Notice how the memoized component only re-renders when its value
+              changes, while the non-memoized component re-renders on any parent
+              update.
             </p>
           </div>
         </div>
