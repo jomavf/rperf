@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, Profiler } from "react";
 import CodeExample from "../../../components/CodeExample";
 import throttle from "lodash/throttle";
 
@@ -19,6 +19,16 @@ interface VisualizationPoint {
   label: string;
 }
 
+interface RenderMetrics {
+  id: string;
+  phase: string;
+  actualDuration: number;
+  baseDuration: number;
+  startTime: number;
+  commitTime: number;
+  timestamp: number;
+}
+
 const COLORS = {
   click: "#FF6B6B",
   mousemove: "#4ECDC4",
@@ -37,6 +47,22 @@ const createVisualizationPoint = (data: ProfileData): VisualizationPoint => ({
   opacity: 1,
   label: `${data.eventType} - ${data.elementInfo}`,
 });
+
+// Component that simulates a heavy load
+const HeavyComponent = ({ index }: { index: number }) => {
+  // Simulate heavy work during render
+  const result = Array.from({ length: 10000 }, (_, i) => i * index).reduce(
+    (acc, val) => acc + Math.sin(val),
+    0
+  );
+
+  return (
+    <div className="p-4 bg-white rounded shadow-sm">
+      <h3 className="font-semibold">Component {index}</h3>
+      <p className="text-sm text-gray-600">Result: {result.toFixed(2)}</p>
+    </div>
+  );
+};
 
 const BadProfilingExample = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -137,7 +163,7 @@ const BadProfilingExample = () => {
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-sm text-gray-500 mb-2">
-        <div>Eventos Procesados: {events}</div>
+        <div>Processed Events: {events}</div>
         <div>FPS: {fps}</div>
       </div>
       <canvas
@@ -260,7 +286,7 @@ const GoodProfilingExample = () => {
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-sm text-gray-500 mb-2">
-        <div>Eventos Procesados: {events}</div>
+        <div>Processed Events: {events}</div>
         <div>FPS: {fps}</div>
       </div>
       <canvas
@@ -277,98 +303,279 @@ const GoodProfilingExample = () => {
   );
 };
 
+const BadProfilerExample = () => {
+  const [metrics, setMetrics] = useState<RenderMetrics[]>([]);
+  const [components, setComponents] = useState<number[]>([1]);
+  const [totalRenders, setTotalRenders] = useState(0);
+  const [avgRenderTime, setAvgRenderTime] = useState(0);
+
+  // Usar refs para acumular métricas sin causar re-renders
+  const metricsRef = useRef<RenderMetrics[]>([]);
+  const rendersRef = useRef(0);
+  const totalTimeRef = useRef(0);
+
+  // Actualizar el estado de forma controlada
+  const updateMetricsDisplay = useCallback(() => {
+    setMetrics(metricsRef.current.slice(-50));
+    setTotalRenders(rendersRef.current);
+    setAvgRenderTime(totalTimeRef.current / rendersRef.current);
+  }, []);
+
+  // Ejemplo Malo: Registrar cada render
+  const handleRender = (
+    id: string,
+    phase: string,
+    actualDuration: number,
+    baseDuration: number,
+    startTime: number,
+    commitTime: number
+  ) => {
+    const newMetric: RenderMetrics = {
+      id,
+      phase,
+      actualDuration,
+      baseDuration,
+      startTime,
+      commitTime,
+      timestamp: Date.now(),
+    };
+
+    // Acumular métricas en refs
+    metricsRef.current = [...metricsRef.current.slice(-49), newMetric];
+    rendersRef.current += 1;
+    totalTimeRef.current += actualDuration;
+
+    // Actualizar el estado de forma segura
+    requestAnimationFrame(updateMetricsDisplay);
+  };
+
+  const addComponent = () => {
+    setComponents((prev) => [...prev, prev.length + 1]);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div className="space-y-1">
+          <div className="text-sm text-gray-600">
+            Total renders: {totalRenders}
+          </div>
+          <div className="text-sm text-gray-600">
+            Average time: {avgRenderTime.toFixed(2)}ms
+          </div>
+        </div>
+        <button
+          onClick={addComponent}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Add Component
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        <Profiler id="heavy-components" onRender={handleRender}>
+          {components.map((index) => (
+            <HeavyComponent key={index} index={index} />
+          ))}
+        </Profiler>
+      </div>
+
+      <div className="mt-4">
+        <h4 className="font-semibold mb-2">Latest metrics:</h4>
+        <div className="h-40 overflow-auto text-sm space-y-1">
+          {metrics.map((metric, i) => (
+            <div key={i} className="text-gray-600">
+              {new Date(metric.timestamp).toLocaleTimeString()}: {metric.id} -
+              {metric.actualDuration.toFixed(2)}ms
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const GoodProfilerExample = () => {
+  const [metrics, setMetrics] = useState<RenderMetrics[]>([]);
+  const [components, setComponents] = useState<number[]>([1]);
+  const [totalRenders, setTotalRenders] = useState(0);
+  const [avgRenderTime, setAvgRenderTime] = useState(0);
+
+  // Usar refs para acumular métricas sin causar re-renders
+  const metricsRef = useRef<RenderMetrics[]>([]);
+  const rendersRef = useRef(0);
+  const totalTimeRef = useRef(0);
+
+  // Ejemplo Bueno: Throttle las actualizaciones de métricas
+  const throttledUpdateMetrics = useCallback(
+    throttle(() => {
+      setMetrics(metricsRef.current.slice(-50));
+      setTotalRenders(rendersRef.current);
+      setAvgRenderTime(totalTimeRef.current / rendersRef.current);
+    }, 1000), // Actualizar máximo una vez por segundo
+    []
+  );
+
+  const handleRender = (
+    id: string,
+    phase: string,
+    actualDuration: number,
+    baseDuration: number,
+    startTime: number,
+    commitTime: number
+  ) => {
+    const newMetric: RenderMetrics = {
+      id,
+      phase,
+      actualDuration,
+      baseDuration,
+      startTime,
+      commitTime,
+      timestamp: Date.now(),
+    };
+
+    // Acumular métricas en refs
+    metricsRef.current = [...metricsRef.current.slice(-49), newMetric];
+    rendersRef.current += 1;
+    totalTimeRef.current += actualDuration;
+
+    // Actualizar el estado de forma throttled
+    throttledUpdateMetrics();
+  };
+
+  const addComponent = () => {
+    setComponents((prev) => [...prev, prev.length + 1]);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div className="space-y-1">
+          <div className="text-sm text-gray-600">
+            Total renders: {totalRenders}
+          </div>
+          <div className="text-sm text-gray-600">
+            Average time: {avgRenderTime.toFixed(2)}ms
+          </div>
+        </div>
+        <button
+          onClick={addComponent}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Add Component
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        <Profiler id="heavy-components" onRender={handleRender}>
+          {components.map((index) => (
+            <HeavyComponent key={index} index={index} />
+          ))}
+        </Profiler>
+      </div>
+
+      <div className="mt-4">
+        <h4 className="font-semibold mb-2">Latest metrics:</h4>
+        <div className="h-40 overflow-auto text-sm space-y-1">
+          {metrics.map((metric, i) => (
+            <div key={i} className="text-gray-600">
+              {new Date(metric.timestamp).toLocaleTimeString()}: {metric.id} -
+              {metric.actualDuration.toFixed(2)}ms
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ProfilingPage = () => {
   return (
     <div className="space-y-8">
       <div className="prose">
         <h1 className="text-3xl font-bold">
-          Throttle Example: User Interaction Profiling
+          Throttle Example: React Profiler API
         </h1>
         <p>
-          El profiling de interacciones de usuario puede ser intensivo en
-          recursos, especialmente para eventos frecuentes como el movimiento del
-          mouse. Este ejemplo visualiza el profiling de eventos del usuario y
-          muestra cómo el throttling puede ayudar a mantener el rendimiento.
+          The React Profiler API is a powerful tool for measuring component
+          render performance. However, in applications with many re-renders,
+          recording every metric can impact performance. This example shows how
+          throttling can help maintain efficient profiling.
         </p>
         <ul className="list-disc list-inside mt-2">
-          <li>Los puntos rojos representan clicks</li>
-          <li>Los puntos verdes representan movimiento del mouse</li>
-          <li>Los puntos azules representan eventos de scroll</li>
-          <li>Los puntos amarillos representan pulsaciones de teclas</li>
+          <li>Each component performs a heavy calculation on every render</li>
+          <li>You can add more components to increase the load</li>
+          <li>
+            Observe how metrics accumulate and their impact on performance
+          </li>
         </ul>
       </div>
 
       <div className="space-y-6">
         <CodeExample
-          title="❌ Bad Example: Sin Throttle"
-          description="Este ejemplo realiza profiling en CADA evento. Mueve el mouse rápidamente, haz click o presiona teclas y observa cómo el rendimiento se degrada rápidamente."
+          title="❌ Bad Example: Without Throttle"
+          description="This example records metrics on every render and displays them immediately. Add several components and observe how constant metric recording can affect performance."
           code={`
-// Ejemplo Malo: Profiling en cada evento
-const handleEvent = (e) => {
-  // Recolectar datos de profiling
-  const profileData = {
-    x: e.clientX,
-    y: e.clientY,
-    timestamp: Date.now(),
-    eventType: e.type,
-    elementInfo: e.target.tagName
+// Bad Example: Update on every render
+const handleRender = (id, phase, actualDuration) => {
+  const newMetric = {
+    id,
+    phase,
+    actualDuration,
+    timestamp: Date.now()
   };
 
-  // 🚫 Trabajo pesado en CADA evento
-  Array.from({ length: 1000 }).forEach(() => {
-    JSON.parse(JSON.stringify(profileData));
-  });
+  // 🚫 Update state on every render
+  metricsRef.current = [...metricsRef.current, newMetric];
+  rendersRef.current += 1;
+  totalTimeRef.current += actualDuration;
 
-  // Actualizar visualización
-  setPoints(prev => [...prev, createVisualizationPoint(profileData)]);
-  setEvents(e => e + 1); // 🚫 Los eventos se acumulan rápidamente
+  // 🚫 Force immediate update
+  requestAnimationFrame(updateMetricsDisplay);
 };`}
         >
-          <BadProfilingExample />
+          <BadProfilerExample />
         </CodeExample>
 
         <CodeExample
-          title="✅ Good Example: Con Throttle"
-          description="Este ejemplo limita el profiling a 10 veces por segundo. Observa cómo el rendimiento se mantiene estable incluso con muchas interacciones."
+          title="✅ Good Example: With Throttle"
+          description="This example accumulates metrics in refs and updates the UI at most once per second. Notice how performance remains stable even with many components."
           code={`
-// Ejemplo Bueno: Profiling throttled
-const throttledProfile = useCallback(
-  throttle((e) => {
-    // Recolectar datos de profiling
-    const profileData = {
-      x: e.clientX,
-      y: e.clientY,
-      timestamp: Date.now(),
-      eventType: e.type,
-      elementInfo: e.target.tagName
-    };
-
-    // ✅ Trabajo pesado limitado a 10 veces por segundo
-    Array.from({ length: 1000 }).forEach(() => {
-      JSON.parse(JSON.stringify(profileData));
-    });
-
-    // Actualizar visualización
-    setPoints(prev => [...prev, createVisualizationPoint(profileData)]);
-    setEvents(e => e + 1); // ✅ Eventos controlados
-  }, 100), // 10 profiles por segundo
+// Good Example: Throttle updates
+const throttledUpdateMetrics = useCallback(
+  throttle(() => {
+    // ✅ Update state at most once per second
+    setMetrics(metricsRef.current.slice(-50));
+    setTotalRenders(rendersRef.current);
+    setAvgRenderTime(totalTimeRef.current / rendersRef.current);
+  }, 1000),
   []
-);`}
+);
+
+const handleRender = (id, phase, actualDuration) => {
+  // ✅ Accumulate metrics in refs (doesn't cause re-renders)
+  metricsRef.current = [...metricsRef.current, newMetric];
+  rendersRef.current += 1;
+  totalTimeRef.current += actualDuration;
+
+  // ✅ Update UI in a throttled way
+  throttledUpdateMetrics();
+};`}
         >
-          <GoodProfilingExample />
+          <GoodProfilerExample />
         </CodeExample>
       </div>
 
       <div className="bg-blue-50 p-4 rounded-lg">
         <h3 className="font-semibold text-blue-800">
-          ¿Por qué usar Throttle en Profiling?
+          Why use Throttle with the Profiler API?
         </h3>
         <ul className="list-disc list-inside mt-2 text-blue-700">
-          <li>Reduce la sobrecarga de procesamiento</li>
-          <li>Mantiene una tasa de muestreo consistente</li>
-          <li>Previene la degradación del rendimiento</li>
-          <li>Genera conjuntos de datos más manejables</li>
-          <li>Mejora la experiencia del usuario final</li>
+          <li>Prevents infinite update loops</li>
+          <li>Reduces state update overhead</li>
+          <li>Maintains application performance</li>
+          <li>Generates manageable profiling data</li>
+          <li>Prevents profiling from affecting the metrics</li>
         </ul>
       </div>
     </div>
