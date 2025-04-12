@@ -1,23 +1,23 @@
 # React Performance Concepts
 
-Una aplicación interactiva para aprender y practicar conceptos de rendimiento en React.
+An interactive application to learn and practice React performance concepts.
 
 ## 🚀 Demo
 
-[Ver Demo en vivo](https://jomavf.github.io/rperf/#/memo)
+[View Live Demo](https://jomavf.github.io/rperf/#/memo)
 
-## 📚 Conceptos Cubiertos
+## 📚 Covered Concepts
 
-- **React.memo** - Memoización de componentes
-- **useMemo Hook** - Memoización de valores
-- **useCallback Hook** - Memoización de funciones
-- **Code Splitting** - División de código
-- **Lazy Loading** - Carga perezosa
-- **Virtual Lists** - Listas virtualizadas
-- **Debounce & Throttle** - Control de eventos frecuentes
-- **Component Profiling** - Perfilado de componentes
+- **React.memo** - Component Memoization
+- **useMemo Hook** - Value Memoization
+- **useCallback Hook** - Function Memoization
+- **Code Splitting** - Code Division
+- **Lazy Loading** - Lazy Component Loading
+- **Virtual Lists** - Virtualized Lists
+- **Debounce & Throttle** - Frequent Event Control
+- **Component Profiling** - Component Performance Profiling
 
-## 🛠️ Tecnologías
+## 🛠️ Technologies
 
 - React
 - TypeScript
@@ -25,24 +25,24 @@ Una aplicación interactiva para aprender y practicar conceptos de rendimiento e
 - Tailwind CSS
 - React Router
 
-## 🎯 Objetivo
+## 🎯 Objective
 
-Este proyecto tiene como objetivo proporcionar ejemplos prácticos e interactivos de los conceptos más importantes de rendimiento en React. Cada concepto incluye:
+This project aims to provide practical and interactive examples of the most important performance concepts in React. Each concept includes:
 
-- Explicación detallada
-- Ejemplo práctico interactivo
-- Casos de uso recomendados
-- Mejores prácticas
+- Detailed explanation
+- Interactive practical example
+- Recommended use cases
+- Best practices
 
-## 🏃‍♂️ Para ejecutar localmente
+## 🏃‍♂️ Running Locally
 
 ```bash
-# Clonar el repositorio
+# Clone the repository
 git clone https://github.com/jomavf/rperf.git
 
-# Instalar dependencias
+# Install dependencies
 npm install
 
-# Iniciar servidor de desarrollo
+# Start development server
 npm run dev
 ```
