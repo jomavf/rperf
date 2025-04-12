@@ -1,1 +1,0 @@
-import{j as s}from"./index-C1Xz9Mv5.js";const r=()=>s.jsxs("div",{children:[s.jsx("h1",{children:"Virtual Lists"}),s.jsx("p",{children:"Coming soon..."})]});export{r as default};
